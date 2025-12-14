@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Basic Paging Hardware (No TLB)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #1a1a1a;
+            --box-bg: #2d2d2d;
+            --accent-cpu: #3498db;  /* Blue */
+            --accent-pt: #9b59b6;   /* Purple */
+            --accent-mem: #2ecc71;  /* Green */
+            --text-color: #ecf0f1;
+            --line-color: #555;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Roboto Mono', monospace;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 { margin-bottom: 5px; border-bottom: 2px solid var(--accent-pt); padding-bottom: 5px; }
+        
+        /* --- LAYOUT GRID --- */
+        .diagram-container {
+            position: relative;
+            display: grid;
+            /* CPU | Page Table | Phy Addr | Memory */
+            grid-template-columns: 180px 220px 200px 200px; 
+            align-items: center;
+            gap: 40px;
+            margin: 50px 0;
+            padding: 40px;
+            background: #222;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* --- COMPONENTS --- */
+        .box {
+            background: var(--box-bg);
+            border: 2px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            position: relative;
+            transition: all 0.3s;
+            z-index: 2;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .box h3 { margin: 0 0 10px 0; font-size: 0.9rem; text-transform: uppercase; color: #888; text-align: center; border-bottom: 1px solid #444; padding-bottom: 5px; }
+
+        /* CPU & Address Box */
+        .addr-box {
+            display: flex;
+            border: 2px solid #fff;
+            margin-top: 10px;
+            background: #000;
+        }
+        .part { padding: 8px; flex: 1; text-align: center; font-weight: bold; position: relative; }
+        .part-p { border-right: 1px solid #fff; color: var(--accent-cpu); }
+        .part-d { color: var(--accent-mem); }
+        .part label { position: absolute; top: -20px; left: 0; width: 100%; font-size: 0.7rem; color: #aaa; }
+
+        /* Page Table */
+        .table-view {
+            max-height: 250px; overflow-y: auto; font-size: 0.8rem;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+        }
+        .table-head { font-weight: bold; color: #aaa; border-bottom: 1px solid #555; margin-bottom: 2px; }
+        .table-row { background: #333; padding: 2px 5px; display: contents; }
+        .table-row span { padding: 4px; text-align: center; border-bottom: 1px solid #444; }
+        
+        /* Physical Address */
+        .phy-box {
+            display: flex;
+            border: 2px solid var(--accent-mem);
+            background: #000;
+            width: 100%;
+        }
+        
+        /* Physical Memory */
+        .mem-group { height: 300px; }
+        .mem-grid { display: flex; flex-direction: column; height: 100%; overflow-y: auto; gap: 1px; }
+        .mem-cell { background: #333; padding: 4px; font-size: 0.75rem; display: flex; justify-content: space-between; }
+
+        /* --- ANIMATION CANVAS --- */
+        #anim-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* --- CONTROLS --- */
+        .controls {
+            display: flex; gap: 15px; background: var(--box-bg); padding: 15px; border-radius: 8px; border-top: 3px solid var(--accent-pt);
+            align-items: center;
+        }
+        button {
+            background: transparent; border: 1px solid var(--accent-pt); color: var(--accent-pt);
+            padding: 8px 16px; font-family: inherit; cursor: pointer; transition: 0.2s;
+            font-weight: bold;
+        }
+        button:hover { background: var(--accent-pt); color: #fff; }
+        
+        .status-bar { margin-top: 15px; color: #aaa; font-size: 0.9rem; height: 20px; }
+        .highlight-text { color: var(--accent-mem); font-weight: bold; }
+        .error-text { color: #e74c3c; font-weight: bold; }
+
+        /* Highlights */
+        .active-box { box-shadow: 0 0 15px var(--accent-cpu); border-color: var(--accent-cpu); }
+        .found-row { background-color: var(--accent-pt) !important; color: #fff; }
+        .found-mem { background-color: var(--accent-mem) !important; color: #000; }
+        .miss-row { background-color: #e74c3c !important; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Basic Paging Model</h1>
+    <div style="font-size: 0.8rem; color: #888;">Direct Mapped (No TLB Optimization)</div>
+
+    <div class="diagram-container">
+        <canvas id="anim-canvas"></canvas>
+
+        <div class="box" id="box-cpu">
+            <h3>CPU</h3>
+            <div style="font-size: 0.8rem; text-align: center; margin-bottom: 5px;">Logical Address</div>
+            <div class="addr-box">
+                <div class="part part-p">
+                    <label>p</label>
+                    <span id="val-p">0</span>
+                </div>
+                <div class="part part-d">
+                    <label>d</label>
+                    <span id="val-d">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="box" id="box-pt">
+            <h3>Page Table</h3>
+            <div class="table-view" id="pt-view">
+                <div class="table-head">Page</div><div class="table-head">Frame</div>
+                </div>
+        </div>
+
+        <div class="box" id="box-phy">
+            <h3>Physical Address</h3>
+            <div class="phy-box">
+                <div class="part part-p" style="color: var(--accent-mem); border-color: var(--accent-mem);">
+                    <label>f</label>
+                    <span id="val-f">-</span>
+                </div>
+                <div class="part part-d">
+                    <label>d</label>
+                    <span id="val-d-phy">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="box mem-group" id="box-mem">
+            <h3>Physical Memory</h3>
+            <div class="mem-grid" id="mem-view">
+                </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div>
+            <label style="font-size: 0.8rem; color: #aaa;">Page (p):</label>
+            <input type="number" id="in-p" min="0" max="7" value="2" style="width: 40px; background:#333; border:1px solid #555; color:#fff; text-align:center;">
+        </div>
+        <div>
+            <label style="font-size: 0.8rem; color: #aaa;">Offset (d):</label>
+            <input type="number" id="in-d" min="0" max="99" value="15" style="width: 40px; background:#333; border:1px solid #555; color:#fff; text-align:center;">
+        </div>
+        <button onclick="runSimulation()">Access Memory</button>
+        <button onclick="resetSim()" style="border-color: #e74c3c; color: #e74c3c;">Reset</button>
+    </div>
+
+    <div class="status-bar" id="status-text">System Ready.</div>
+
+    <script>
+        /* --- CONFIG --- */
+        const PAGE_COUNT = 8;
+        const FRAME_COUNT = 16;
+        
+        let pageTable = [];
+        let isRunning = false;
+
+        const canvas = document.getElementById('anim-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function init() {
+            // Setup Page Table
+            pageTable = [];
+            let usedFrames = new Set();
+            for(let i=0; i<PAGE_COUNT; i++){
+                let f = -1;
+                if(Math.random() > 0.1) { // 90% valid
+                    do { f = Math.floor(Math.random() * FRAME_COUNT); } while(usedFrames.has(f));
+                    usedFrames.add(f);
+                }
+                pageTable.push(f);
+            }
+            renderDOM();
+            resizeCanvas();
+        }
+
+        function renderDOM() {
+            // Page Table
+            const ptEl = document.getElementById('pt-view');
+            ptEl.innerHTML = '<div class="table-head">Page</div><div class="table-head">Frame</div>';
+            pageTable.forEach((f, i) => {
+                ptEl.innerHTML += `
+                    <div class="table-row" id="pt-row-${i}">
+                        <span>${i}</span>
+                        <span>${f === -1 ? 'Inv' : f}</span>
+                    </div>`;
+            });
+
+            // Memory
+            const memEl = document.getElementById('mem-view');
+            memEl.innerHTML = '';
+            for(let i=0; i<FRAME_COUNT; i++) {
+                memEl.innerHTML += `<div class="mem-cell" id="mem-row-${i}"><span>Frame ${i}</span><span>[Data]</span></div>`;
+            }
+        }
+
+        /* --- VISUALIZATION HELPERS --- */
+        function getRect(id) {
+            const el = document.getElementById(id);
+            const container = document.querySelector('.diagram-container');
+            const r = el.getBoundingClientRect();
+            const c = container.getBoundingClientRect();
+            return {
+                x: r.left - c.left + r.width/2,
+                y: r.top - c.top + r.height/2,
+                w: r.width, h: r.height,
+                left: r.left - c.left, top: r.top - c.top,
+                right: r.right - c.left, bottom: r.bottom - c.top
+            };
+        }
+
+        async function drawPath(p1, p2, color, label="") {
+            return new Promise(resolve => {
+                const start = {x: p1.x, y: p1.y};
+                const end = {x: p2.x, y: p2.y};
+                let progress = 0;
+                
+                function step() {
+                    progress += 0.04; // Speed
+                    if(progress > 1) progress = 1;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(start.x, start.y);
+                    ctx.lineTo(start.x + (end.x - start.x)*progress, start.y + (end.y - start.y)*progress);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+
+                    // Arrowhead
+                    if(progress === 1) {
+                         const angle = Math.atan2(end.y - start.y, end.x - start.x);
+                         ctx.beginPath();
+                         ctx.moveTo(end.x, end.y);
+                         ctx.lineTo(end.x - 10 * Math.cos(angle - Math.PI / 6), end.y - 10 * Math.sin(angle - Math.PI / 6));
+                         ctx.lineTo(end.x - 10 * Math.cos(angle + Math.PI / 6), end.y - 10 * Math.sin(angle + Math.PI / 6));
+                         ctx.fillStyle = color;
+                         ctx.fill();
+                    }
+
+                    if(label && progress > 0.5) {
+                        ctx.fillStyle = "#fff";
+                        ctx.font = "12px monospace";
+                        ctx.fillText(label, (start.x+end.x)/2, (start.y+end.y)/2 - 10);
+                    }
+
+                    if(progress < 1) requestAnimationFrame(step);
+                    else resolve();
+                }
+                step();
+            });
+        }
+
+        function clearCanvas() { ctx.clearRect(0,0, canvas.width, canvas.height); }
+        function setStatus(msg, type="") {
+            const el = document.getElementById('status-text');
+            el.innerHTML = msg;
+            el.className = "status-bar " + type;
+        }
+
+        /* --- SIMULATION LOGIC --- */
+        async function runSimulation() {
+            if(isRunning) return;
+            isRunning = true;
+            clearCanvas();
+            document.querySelectorAll('.found-row, .miss-row, .found-mem').forEach(e => e.classList.remove('found-row', 'miss-row', 'found-mem'));
+            
+            const p = parseInt(document.getElementById('in-p').value);
+            const d = parseInt(document.getElementById('in-d').value);
+            
+            if (p >= PAGE_COUNT) { 
+                setStatus("Error: Logical Page number out of bounds", "error-text");
+                isRunning = false; return;
+            }
+
+            // 1. Initial State
+            document.getElementById('val-p').innerText = p;
+            document.getElementById('val-d').innerText = d;
+            document.getElementById('val-f').innerText = '?';
+            document.getElementById('val-d-phy').innerText = '?';
+            
+            const cpuBox = getRect('box-cpu');
+            const ptBox = getRect('box-pt');
+            const phyBox = getRect('box-phy');
+            const memBox = getRect('box-mem');
+
+            // --- ANIMATION STEP 1: Offset (d) bypasses translation ---
+            setStatus("Extracting Offset (d)...");
+            await drawPath(
+                {x: cpuBox.right - 40, y: cpuBox.y + 10}, 
+                {x: phyBox.left + 40, y: phyBox.y + 10}, 
+                "#2ecc71", "d"
+            );
+            document.getElementById('val-d-phy').innerText = d;
+
+            // --- ANIMATION STEP 2: Page (p) lookup in Page Table ---
+            setStatus(`Looking up Page ${p} in Page Table...`);
+            await drawPath(
+                {x: cpuBox.right - 40, y: cpuBox.y - 10}, 
+                {x: ptBox.left, y: ptBox.y}, 
+                "#3498db", "p"
+            );
+            
+            document.getElementById('box-pt').style.borderColor = "#9b59b6";
+            
+            // Highlight Row
+            const row = document.getElementById(`pt-row-${p}`);
+            if(row) {
+                row.scrollIntoView({behavior:'smooth', block:'center'});
+                row.classList.add('found-row');
+            }
+            
+            await new Promise(r => setTimeout(r, 600));
+
+            // Logic Check
+            const frame = pageTable[p];
+            if(frame === -1) {
+                setStatus("TRAP: Invalid Page Reference!", "error-text");
+                if(row) row.classList.add('miss-row');
+                isRunning = false;
+                return;
+            }
+
+            // --- ANIMATION STEP 3: Frame (f) to Physical Address ---
+            setStatus(`Page ${p} maps to Frame ${frame}. Generating Physical Address...`, "highlight-text");
+            await drawPath(
+                {x: ptBox.right, y: ptBox.y}, 
+                {x: phyBox.left + 20, y: phyBox.y - 10}, 
+                "#9b59b6", "f"
+            );
+            
+            document.getElementById('val-f').innerText = frame;
+            document.getElementById('box-pt').style.borderColor = "#444";
+            document.getElementById('box-phy').style.borderColor = "#2ecc71";
+            
+            await new Promise(r => setTimeout(r, 500));
+
+            // --- ANIMATION STEP 4: Access Memory ---
+            setStatus("Accessing Physical Memory...", "highlight-text");
+            await drawPath(
+                {x: phyBox.right, y: phyBox.y},
+                {x: memBox.left, y: memBox.y},
+                "#fff"
+            );
+            
+            const memRow = document.getElementById(`mem-row-${frame}`);
+            if(memRow) {
+                memRow.scrollIntoView({behavior:'smooth', block:'center'});
+                memRow.classList.add('found-mem');
+            }
+
+            setStatus("Data retrieved successfully.", "highlight-text");
+            isRunning = false;
+        }
+
+        function resetSim() {
+            init();
+            clearCanvas();
+            document.getElementById('val-p').innerText = 0;
+            document.getElementById('val-d').innerText = 0;
+            document.getElementById('val-f').innerText = '-';
+            document.getElementById('val-d-phy').innerText = '-';
+            document.getElementById('box-pt').style.borderColor = "#444";
+            document.getElementById('box-phy').style.borderColor = "#2ecc71";
+            setStatus("System Reset.");
+        }
+
+        function resizeCanvas() {
+            const c = document.querySelector('.diagram-container');
+            if(c) {
+                canvas.width = c.offsetWidth;
+                canvas.height = c.offsetHeight;
+            }
+        }
+        window.onresize = resizeCanvas;
+
+        // Start
+        init();
+
+    </script>
+</body>
+</html>
