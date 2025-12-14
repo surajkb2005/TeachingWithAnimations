@@ -2,123 +2,242 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Paging: Binary & Decimal View</title>
+    <title>Modern Paging Simulator</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@500&display=swap');
 
         :root {
-            --bg-color: #1e1e1e;
-            --box-bg: #2d2d2d;
-            --text-color: #e0e0e0;
-            --accent-blue: #4fc3f7;   /* Page (p) */
-            --accent-green: #81c784;  /* Offset (d) */
-            --accent-purple: #ba68c8; /* Frame (f) */
-            --highlight-bg: #ffeb3b;
-            --highlight-text: #000;
+            /* Palette */
+            --bg-grad-start: #0f172a;
+            --bg-grad-end: #1e293b;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --panel-border: rgba(148, 163, 184, 0.2);
+            
+            /* Brighter, solid colors for "Highlight" effect */
+            --accent-p: #0ea5e9; /* Vivid Blue */
+            --accent-d: #22c55e; /* Vivid Green */
+            --accent-f: #d946ef; /* Vivid Purple */
+            --accent-white: #f8fafc;
+            
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            
+            --highlight-row: rgba(14, 165, 233, 0.2);
+            --highlight-border: #0ea5e9;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Roboto Mono', monospace;
+            background: linear-gradient(135deg, var(--bg-grad-start), var(--bg-grad-end));
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 20px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        h1 { margin-bottom: 5px; color: var(--accent-blue); border-bottom: 2px solid var(--accent-blue); }
-        p { color: #aaa; font-size: 0.9rem; margin-bottom: 20px; }
-
-        /* --- LAYOUT --- */
-        .main-container {
-            display: flex;
-            gap: 40px;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            justify-content: center;
+        h1 {
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            margin-bottom: 5px;
+            color: var(--text-main);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        /* --- HARDWARE SECTION (Left) --- */
-        .hardware-section {
+        p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 30px; }
+
+        /* --- MAIN LAYOUT --- */
+        .main-container {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* --- PANELS --- */
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            padding: 30px;
             position: relative;
-            background: #252526;
-            padding: 40px;
-            border-radius: 10px;
-            border: 1px solid #444;
-            width: 580px;
+        }
+
+        /* --- LEFT: HARDWARE DIAGRAM --- */
+        .hardware-section {
+            width: 600px;
             height: 600px;
             display: grid;
-            grid-template-columns: 240px 240px; 
-            grid-template-rows: 140px 320px;
-            gap: 60px 80px; 
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 40px 60px;
         }
 
         .hw-box {
-            background: var(--box-bg);
-            border: 2px solid #555;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
             padding: 15px;
-            text-align: center;
-            border-radius: 6px;
-            z-index: 2;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             position: relative;
+            z-index: 2;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        /* HEADING COLOR FIX: White */
-        .hw-label { font-size: 0.9rem; font-weight: bold; color: #ffffff; display: block; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px solid #555; padding-bottom: 5px; }
+        .hw-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
 
-        /* Positioning */
+        /* Layout Positions */
         #cpu-box { grid-column: 1; grid-row: 1; align-self: center; }
         #phy-addr-box { grid-column: 2; grid-row: 1; align-self: center; }
-        #pt-box { grid-column: 1; grid-row: 2; align-self: start; margin-top: 10px; }
-        #ram-box { grid-column: 2; grid-row: 2; align-self: start; height: 300px; overflow-y: auto; margin-top: 10px; }
+        #pt-box { grid-column: 1; grid-row: 2; height: 320px; }
+        #ram-box { grid-column: 2; grid-row: 2; height: 320px; }
 
-        /* Address Splitting */
-        .split-addr { display: flex; border: 1px solid #555; border-radius: 4px; overflow: hidden; font-size: 1.1rem;}
-        .split-part { flex: 1; padding: 10px 5px; border-right: 1px solid #555; min-width: 40px; display: flex; flex-direction: column; align-items: center;}
-        .split-part:last-child { border-right: none; }
-        
-        .bit-label { font-size: 0.7rem; margin-bottom: 2px; opacity: 0.7; }
-        .val-display { font-weight: bold; }
-        .binary-sub { font-size: 0.7rem; opacity: 0.8; margin-top: 2px; font-family: monospace; }
-
-        /* Colors */
-        .p-col { color: var(--accent-blue); border-color: var(--accent-blue); }
-        .d-col { color: var(--accent-green); border-color: var(--accent-green); }
-        .f-col { color: var(--accent-purple); border-color: var(--accent-purple); }
-
-        /* Tables */
-        .mini-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        .mini-table td, .mini-table th { border: 1px solid #444; padding: 6px; }
-        .mini-table th { background: #333; color: #ffffff; } /* Heading White */
-        .highlight-row { background-color: var(--highlight-bg) !important; color: var(--highlight-text) !important; transition: background 0.3s; }
-
-        /* --- MODEL SECTION (Right) --- */
-        .model-section {
+        /* Address Splitting (Registers) */
+        .split-addr {
             display: flex;
-            gap: 20px;
-            background: #252526;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #444;
-            height: 680px;
+            width: 100%;
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0f172a;
         }
 
-        .memory-column { display: flex; flex-direction: column; width: 180px; }
-        /* Heading White */
-        .col-header { text-align: center; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #555; padding-bottom: 5px; color: #ffffff; }
-        
-        .mem-block { border: 1px solid #555; margin-bottom: 8px; font-size: 0.8rem; border-radius: 4px; overflow: hidden; background: #2d2d2d; }
-        /* Heading White */
-        .block-header { background: #333; padding: 4px; border-bottom: 1px solid #444; font-weight: bold; font-size: 0.75rem; color: #ffffff; text-align: center; }
-        
-        .data-line { padding: 4px 8px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; }
-        .active-data { background-color: var(--accent-blue); color: #000; font-weight: bold; }
-        .active-phy-data { background-color: var(--accent-green); color: #000; font-weight: bold; }
+        .split-part {
+            flex: 1;
+            padding: 10px;
+            border-right: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .split-part:last-child { border-right: none; }
 
-        .line-num { font-family: monospace; color: #888; font-size: 0.75rem; margin-right: 5px; }
+        .bit-label { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 4px; }
+        .val-display { font-family: 'Fira Code', monospace; font-size: 1.2rem; font-weight: bold; }
+        .binary-sub { font-family: 'Fira Code', monospace; font-size: 0.75rem; opacity: 0.6; margin-top: 2px; }
+
+        /* Color Coding */
+        .c-p .val-display, .c-p .binary-sub { color: var(--accent-p); }
+        .c-d .val-display, .c-d .binary-sub { color: var(--accent-d); }
+        .c-f .val-display, .c-f .binary-sub { color: var(--accent-f); }
+
+        .bin-info { font-size: 0.7rem; color: var(--text-muted); margin-top: 8px; font-family: 'Fira Code', monospace; }
+
+        /* Scrollable Areas */
+        .scroll-area {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            border-radius: 6px;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+        /* Tables */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+        }
+        .data-table th {
+            position: sticky; top: 0;
+            background: #1e293b;
+            color: var(--text-main);
+            padding: 8px;
+            font-size: 0.7rem;
+            text-align: left;
+            border-bottom: 1px solid var(--panel-border);
+        }
+        .data-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-muted);
+        }
+        
+        .row-highlight {
+            background: var(--highlight-row);
+            color: white !important;
+            border-left: 3px solid var(--highlight-border);
+        }
+
+        /* --- RIGHT: MODEL SECTION --- */
+        .model-section {
+            width: 400px;
+            height: 600px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .mem-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .col-title {
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--panel-border);
+        }
+
+        .mem-block {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .block-head {
+            background: rgba(255,255,255,0.05);
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            color: var(--text-main);
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(255,255,255,0.02);
+        }
+        .data-row:last-child { border-bottom: none; }
+
+        .active-log { background: rgba(14, 165, 233, 0.2); color: var(--accent-p) !important; font-weight: bold; }
+        .active-phy { background: rgba(34, 197, 94, 0.2); color: var(--accent-d) !important; font-weight: bold; }
 
         /* --- CANVAS --- */
         #anim-canvas {
@@ -131,92 +250,121 @@
 
         /* --- CONTROLS --- */
         .controls {
-            margin-top: 20px;
+            margin-top: 30px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            backdrop-filter: blur(10px);
             padding: 15px 30px;
-            background: #252526;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border-radius: 50px;
             display: flex;
             gap: 20px;
             align-items: center;
-            border-top: 4px solid var(--accent-blue);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
         }
 
-        select { padding: 8px; border-radius: 4px; border: 1px solid #555; background: #333; color: white; font-family: inherit; }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .input-group label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
 
-        button {
-            padding: 10px 20px;
-            color: white;
-            border: none;
-            border-radius: 4px;
+        select {
+            background: #0f172a;
+            border: 1px solid var(--panel-border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
             cursor: pointer;
-            font-family: inherit;
-            font-weight: bold;
-            font-size: 1rem;
+            outline: none;
+        }
+        select:focus { border-color: var(--accent-p); }
+
+        /* Buttons */
+        .btn {
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
             transition: all 0.2s;
-            display: flex; align-items: center; gap: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        
-        #btn-next { background: var(--accent-blue); width: 170px; justify-content: center; color: #000; }
-        #btn-next:hover { background: #81d4fa; transform: translateY(-2px); }
-        #btn-next:disabled { background: #555; color: #888; transform: none; cursor: not-allowed; }
 
-        #btn-reset { background: #444; color: #ccc; }
-        #btn-reset:hover { background: #555; }
+        .btn-primary {
+            background: var(--accent-p);
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+        }
+        .btn-primary:hover { background: #0284c7; transform: translateY(-1px); }
+        .btn-primary:disabled { background: #475569; cursor: not-allowed; box-shadow: none; transform: none; color: #94a3b8; }
 
-        .status-box {
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.05); color: var(--text-main); }
+
+        /* Status */
+        .status-display {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
             margin-left: 20px;
-            padding: 8px 15px;
-            background: #333;
-            border: 1px solid #555;
-            color: var(--accent-green);
-            font-weight: bold;
-            border-radius: 4px;
-            width: 300px;
-            text-align: center;
-            font-size: 0.85rem;
         }
 
-        .step-dots { display: flex; gap: 5px; margin-left: 10px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: #444; }
-        .dot.active { background: var(--accent-blue); box-shadow: 0 0 5px var(--accent-blue); }
+        .dots { display: flex; gap: 6px; margin-bottom: 5px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #334155; transition: 0.3s; }
+        .dot.active { background: var(--accent-p); box-shadow: 0 0 8px var(--accent-p); }
 
-        /* Helper for Binary Tooltip */
-        .bin-addr { font-family: monospace; color: #aaa; font-size: 0.8rem; margin-top: 5px; }
+        .status-text {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            color: var(--accent-d);
+            min-width: 250px;
+            text-align: right;
+        }
 
     </style>
 </head>
 <body>
 
-    <h1>Paging: Binary & Decimal View</h1>
-    <p>Mapping Logical Addresses (p, d) to Physical Addresses (f, d).</p>
+    <h1>Paging Simulator</h1>
+    <p>Architecture Level: Binary Translation</p>
 
     <div class="main-container">
         
-        <div class="hardware-section">
+        <div class="panel hardware-section">
             <canvas id="anim-canvas"></canvas>
 
             <div class="hw-box" id="cpu-box">
                 <span class="hw-label">CPU (Logical Address)</span>
                 <div class="split-addr">
-                    <div class="split-part p-col" id="cpu-p-part">
+                    <div class="split-part c-p" id="cpu-p-part">
                         <span class="bit-label">Page (p)</span>
                         <span id="disp-p" class="val-display">0</span>
                         <span id="bin-p" class="binary-sub">00</span>
                     </div>
-                    <div class="split-part d-col" id="cpu-d-part">
+                    <div class="split-part c-d" id="cpu-d-part">
                         <span class="bit-label">Offset (d)</span>
                         <span id="disp-d" class="val-display">0</span>
                         <span id="bin-d" class="binary-sub">00</span>
                     </div>
                 </div>
-                <div class="bin-addr">Total Bits: 4 (2+2) </div>
+                <div class="bin-info">4 Bits Total</div>
             </div>
 
             <div class="hw-box" id="pt-box">
                 <span class="hw-label">Page Table</span>
-                <div style="max-height: 200px; overflow-y:auto;">
-                    <table class="mini-table">
+                <div class="scroll-area">
+                    <table class="data-table">
                         <thead><tr><th>Page (p)</th><th>Frame (f)</th></tr></thead>
                         <tbody id="pt-body"></tbody>
                     </table>
@@ -224,77 +372,84 @@
             </div>
 
             <div class="hw-box" id="phy-addr-box">
-                <span class="hw-label">Physical Address Register</span>
-                <div class="split-addr" style="border-color: #555;">
-                    <div class="split-part f-col" id="phy-f-part">
+                <span class="hw-label">Physical Address Reg</span>
+                <div class="split-addr">
+                    <div class="split-part c-f" id="phy-f-part">
                         <span class="bit-label">Frame (f)</span>
                         <span id="disp-f" class="val-display">-</span>
                         <span id="bin-f" class="binary-sub">---</span>
                     </div>
-                    <div class="split-part d-col" id="phy-d-part">
+                    <div class="split-part c-d" id="phy-d-part">
                         <span class="bit-label">Offset (d)</span>
                         <span id="disp-d-phy" class="val-display">-</span>
                         <span id="bin-d-phy" class="binary-sub">--</span>
                     </div>
                 </div>
-                <div class="bin-addr">Total Bits: 5 (3+2)</div>
+                <div class="bin-info">5 Bits Total (3+2)</div>
             </div>
 
             <div class="hw-box" id="ram-box">
                 <span class="hw-label">Physical Memory (RAM)</span>
-                <table class="mini-table">
-                    <thead><tr><th>Frame No.</th><th>Content</th></tr></thead>
-                    <tbody id="ram-body"></tbody>
-                </table>
+                <div class="scroll-area">
+                    <table class="data-table">
+                        <thead><tr><th>Frame No.</th><th>Content</th></tr></thead>
+                        <tbody id="ram-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <div class="model-section">
-            <div class="memory-column">
-                <div class="col-header">Logical Memory</div>
-                <div style="overflow-y:auto; flex:1;" id="logical-view"></div>
+        <div class="panel model-section">
+            <div class="mem-col">
+                <div class="col-title">Logical Memory</div>
+                <div class="scroll-area" id="logical-view" style="padding: 10px;"></div>
             </div>
 
-            <div class="memory-column">
-                <div class="col-header">Physical Memory</div>
-                <div style="overflow-y:auto; flex:1;" id="physical-view"></div>
+            <div class="mem-col">
+                <div class="col-title">Physical Memory</div>
+                <div class="scroll-area" id="physical-view" style="padding: 10px;"></div>
             </div>
         </div>
     </div>
 
     <div class="controls">
-        <div>
-            <label>Page (p):</label>
+        <div class="input-group">
+            <label>Page (p)</label>
             <select id="sel-p" onchange="resetSim()">
-                <option value="0">Page 0 (00)</option>
-                <option value="1">Page 1 (01)</option>
-                <option value="2">Page 2 (10)</option>
-                <option value="3">Page 3 (11)</option>
+                <option value="0">0 (00)</option>
+                <option value="1">1 (01)</option>
+                <option value="2">2 (10)</option>
+                <option value="3">3 (11)</option>
             </select>
         </div>
-        <div>
-            <label>Offset (d):</label>
+        <div class="input-group">
+            <label>Offset (d)</label>
             <select id="sel-d" onchange="resetSim()">
-                <option value="0">Line 0 (00)</option>
-                <option value="1">Line 1 (01)</option>
-                <option value="2">Line 2 (10)</option>
-                <option value="3">Line 3 (11)</option>
+                <option value="0">0 (00)</option>
+                <option value="1">1 (01)</option>
+                <option value="2">2 (10)</option>
+                <option value="3">3 (11)</option>
             </select>
         </div>
         
-        <button onclick="nextStep()" id="btn-next">Next Step &#8594;</button>
-        <button onclick="resetSim()" id="btn-reset">Reset</button>
+        <div style="width: 1px; height: 30px; background: var(--panel-border); margin: 0 10px;"></div>
 
-        <div class="step-dots" id="dots-container">
-            <div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <button onclick="nextStep()" id="btn-next" class="btn btn-primary">
+            Next Step
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:5px"><path d="M5 12l6-6-6-6"/></svg>
+        </button>
+        <button onclick="resetSim()" class="btn btn-secondary">Reset</button>
+
+        <div class="status-display">
+            <div class="dots" id="dots-container">
+                <div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div id="status-msg" class="status-text">Ready to Start</div>
         </div>
-
-        <div class="status-box" id="status-msg">Waiting to Start...</div>
     </div>
 
     <script>
-        // --- CONFIG ---
-        // 2 bits for Page (4 pages), 2 bits for Offset (4 lines), 3 bits for Frame (8 frames)
+        // --- LOGIC (STANDARD) ---
         const logicalData = [
             ['Data A', 'Data B', 'Data C', 'Data D'], 
             ['Data E', 'Data F', 'Data G', 'Data H'], 
@@ -308,35 +463,31 @@
         const canvas = document.getElementById('anim-canvas');
         const ctx = canvas.getContext('2d');
 
-        // Helper: Decimal to Binary String
-        function toBin(num, bits) {
-            return num.toString(2).padStart(bits, '0');
-        }
+        function toBin(num, bits) { return num.toString(2).padStart(bits, '0'); }
 
         // --- INIT ---
         function init() {
             let usedFrames = new Set();
             pageTable = [];
-            // Randomly assign frames
             for(let i=0; i<4; i++) {
                 let f; do { f = Math.floor(Math.random() * 8); } while(usedFrames.has(f));
                 usedFrames.add(f);
                 pageTable.push(f);
             }
-            renderHardwareTables();
-            renderContentModel();
+            renderTables();
+            renderMemoryViews();
             resizeCanvas();
-            updateUIState();
+            updateUI();
         }
 
-        function renderHardwareTables() {
+        function renderTables() {
             const ptBody = document.getElementById('pt-body');
             ptBody.innerHTML = '';
             pageTable.forEach((f, p) => {
                 ptBody.innerHTML += `
                     <tr id="hw-pt-row-${p}">
-                        <td><span style="color:var(--accent-blue)">${p}</span> (${toBin(p,2)})</td>
-                        <td><span style="color:var(--accent-purple)">${f}</span> (${toBin(f,3)})</td>
+                        <td style="color:var(--accent-p)">${p} (${toBin(p,2)})</td>
+                        <td style="color:var(--accent-f)">${f} (${toBin(f,3)})</td>
                     </tr>`;
             });
 
@@ -344,25 +495,23 @@
             ramBody.innerHTML = '';
             for(let f=0; f<8; f++) {
                 let pIdx = pageTable.indexOf(f);
-                let content = (pIdx !== -1) ? `<b>Page ${pIdx}</b>` : `<span style="color:#555">Free</span>`;
+                let content = (pIdx !== -1) ? `<span style="color:#fff">Page ${pIdx}</span>` : `<span style="opacity:0.3">Free</span>`;
                 ramBody.innerHTML += `
                     <tr id="hw-ram-row-${f}">
-                        <td>Frame ${f} <span style="color:#777">(${toBin(f,3)})</span></td>
+                        <td style="font-family:'Fira Code'">Frame ${f} <span style="opacity:0.5">(${toBin(f,3)})</span></td>
                         <td>${content}</td>
                     </tr>`;
             }
         }
 
-        function renderContentModel() {
+        function renderMemoryViews() {
             const logContainer = document.getElementById('logical-view');
             logContainer.innerHTML = '';
             logicalData.forEach((lines, pIdx) => {
-                // Modified Header: Includes Decimal and Binary
-                let html = `<div class="mem-block"><div class="block-header">Page ${pIdx} (Bin: ${toBin(pIdx, 2)})</div>`;
+                let html = `<div class="mem-block"><div class="block-head">Page ${pIdx} <span style="opacity:0.5">${toBin(pIdx, 2)}</span></div>`;
                 lines.forEach((char, offset) => {
-                    // Modified Line: Includes Decimal and Binary
-                    html += `<div class="data-line" id="log-line-${pIdx}-${offset}">
-                                <span class="line-num">${offset} (${toBin(offset,2)})</span>
+                    html += `<div class="data-row" id="log-line-${pIdx}-${offset}">
+                                <span>${offset} <span style="opacity:0.5">(${toBin(offset,2)})</span></span>
                                 <span>${char}</span>
                              </div>`;
                 });
@@ -373,26 +522,24 @@
             const phyContainer = document.getElementById('physical-view');
             phyContainer.innerHTML = '';
             for(let f=0; f<8; f++) {
+                let html = `<div class="mem-block"><div class="block-head">Frame ${f} <span style="opacity:0.5">${toBin(f,3)}</span></div>`;
                 let pIdx = pageTable.indexOf(f);
-                // Modified Header: Includes Decimal and Binary
-                let html = `<div class="mem-block"><div class="block-header">Frame ${f} (Bin: ${toBin(f,3)})</div>`;
                 if(pIdx !== -1) {
                     logicalData[pIdx].forEach((char, offset) => {
-                        // Modified Line: Includes Decimal and Binary
-                        html += `<div class="data-line" id="phy-line-${f}-${offset}">
-                                    <span class="line-num">${offset} (${toBin(offset,2)})</span>
+                        html += `<div class="data-row" id="phy-line-${f}-${offset}">
+                                    <span>${offset} <span style="opacity:0.5">(${toBin(offset,2)})</span></span>
                                     <span>${char}</span>
                                  </div>`;
                     });
                 } else {
-                    html += `<div style="padding:5px; color:#555; text-align:center;">- Empty -</div>`;
+                    html += `<div style="padding:4px; text-align:center; opacity:0.3; font-size:0.7rem">- Empty -</div>`;
                 }
                 html += `</div>`;
                 phyContainer.innerHTML += html;
             }
         }
 
-        // --- DRAWING HELPERS ---
+        // --- DRAWING LOGIC (UPDATED STYLE) ---
         function getAnchor(id, side) {
             const el = document.getElementById(id);
             const root = document.querySelector('.hardware-section');
@@ -416,7 +563,7 @@
                     totalLength += Math.sqrt(dx*dx + dy*dy);
                 }
 
-                const speed = 4; 
+                const speed = 7; 
                 let walked = 0;
 
                 function step() {
@@ -443,8 +590,10 @@
                             currentDist -= dist;
                         }
                     }
+                    
+                    // NEW STYLE: Solid, clean line with no shadowBlur
                     ctx.strokeStyle = color;
-                    ctx.lineWidth = 3;
+                    ctx.lineWidth = 4;
                     ctx.lineCap = 'round';
                     ctx.lineJoin = 'round';
                     ctx.stroke();
@@ -456,7 +605,7 @@
             });
         }
 
-        // --- STEP MACHINE ---
+        // --- STEP CONTROLLER ---
         async function nextStep() {
             if(isAnimating) return;
             isAnimating = true;
@@ -468,17 +617,15 @@
             const d = parseInt(document.getElementById('sel-d').value);
             const f = pageTable[p];
 
-            // Update CPU box display
             document.getElementById('disp-p').innerText = p;
             document.getElementById('bin-p').innerText = toBin(p, 2);
             document.getElementById('disp-d').innerText = d;
             document.getElementById('bin-d').innerText = toBin(d, 2);
 
             switch(currentStep) {
-                case 0:
-                    // Step 1: Extract P
-                    setStatus(`1. CPU generates Address. Extract Page p=${p} (Bin: ${toBin(p,2)})`);
-                    highlight(`log-line-${p}-${d}`, 'active-data');
+                case 0: // Extract P
+                    setStatus(`Extracted Page: ${p} (${toBin(p,2)})`);
+                    highlight(`log-line-${p}-${d}`, 'active-log');
                     
                     const cpuP = getAnchor('cpu-p-part', 'bottom');
                     const ptTop = getAnchor('pt-box', 'top');
@@ -486,96 +633,84 @@
                     await drawPolyline([
                         {x: cpuP.x, y: cpuP.y},
                         {x: cpuP.x, y: ptTop.y}
-                    ], '#4fc3f7'); // Blue
-                    
+                    ], '#0ea5e9'); // Accent-P
                     currentStep++;
                     break;
 
-                case 1:
-                    // Step 2: Lookup F
-                    setStatus(`2. Page Table maps Page ${p} (${toBin(p,2)}) -> Frame ${f} (${toBin(f,3)})`);
-                    highlight(`hw-pt-row-${p}`, 'highlight-row');
+                case 1: // Lookup F
+                    setStatus(`Mapping: Page ${p} → Frame ${f}`);
+                    highlight(`hw-pt-row-${p}`, 'row-highlight');
                     
-                    await new Promise(r => setTimeout(r, 400)); 
+                    await new Promise(r => setTimeout(r, 300));
 
-                    const ptTopRef = getAnchor('pt-box', 'top'); 
+                    const ptTopRef = getAnchor('pt-box', 'top');
                     const phyF = getAnchor('phy-f-part', 'bottom');
                     const midY = (getAnchor('cpu-box', 'bottom').y + ptTopRef.y) / 2;
 
                     await drawPolyline([
-                        {x: ptTopRef.x + 40, y: ptTopRef.y}, 
-                        {x: ptTopRef.x + 40, y: midY},       
-                        {x: phyF.x, y: midY},                
-                        {x: phyF.x, y: phyF.y}               
-                    ], '#ba68c8'); // Purple
+                        {x: ptTopRef.x + 40, y: ptTopRef.y},
+                        {x: ptTopRef.x + 40, y: midY},
+                        {x: phyF.x, y: midY},
+                        {x: phyF.x, y: phyF.y}
+                    ], '#d946ef'); // Accent-F
 
                     document.getElementById('disp-f').innerText = f;
                     document.getElementById('bin-f').innerText = toBin(f, 3);
                     currentStep++;
                     break;
 
-                case 2:
-                    // Step 3: Transfer D
-                    setStatus(`3. Offset d=${d} (${toBin(d,2)}) remains unchanged.`);
+                case 2: // Transfer D
+                    setStatus(`Offset ${d} (${toBin(d,2)}) Copied Direct`);
                     
                     const cpuD = getAnchor('cpu-d-part', 'top');
                     const phyD = getAnchor('phy-d-part', 'top');
-                    const archHeight = cpuD.y - 50; 
+                    const archHeight = cpuD.y - 60;
                     
                     await drawPolyline([
                         {x: cpuD.x, y: cpuD.y},
                         {x: cpuD.x, y: archHeight},
                         {x: phyD.x, y: archHeight},
                         {x: phyD.x, y: phyD.y}
-                    ], '#81c784'); // Green
+                    ], '#22c55e'); // Accent-D
 
                     document.getElementById('disp-d-phy').innerText = d;
                     document.getElementById('bin-d-phy').innerText = toBin(d, 2);
                     currentStep++;
                     break;
 
-                case 3:
-                    // Step 4: Access RAM
-                    setStatus(`4. Physical Address: Frame ${toBin(f,3)} | Offset ${toBin(d,2)}`);
+                case 3: // Access RAM
+                    setStatus(`Accessing Addr: ${toBin(f,3)}${toBin(d,2)}`);
                     const phyBot = getAnchor('phy-addr-box', 'bottom');
                     const ramTop = getAnchor('ram-box', 'top');
                     
                     await drawPolyline([
                         {x: phyBot.x, y: phyBot.y},
                         {x: phyBot.x, y: ramTop.y}
-                    ], '#aaa');
+                    ], '#f8fafc'); // White
                     
-                    highlight(`hw-ram-row-${f}`, 'highlight-row');
-                    highlight(`phy-line-${f}-${d}`, 'active-phy-data');
-                    
-                    // Final Status update
-                    document.getElementById('status-msg').innerHTML = 
-                        `Data Found at Address <br> <span style="color:#fff">Binary: ${toBin(f,3)}${toBin(d,2)}</span>`;
+                    highlight(`hw-ram-row-${f}`, 'row-highlight');
+                    highlight(`phy-line-${f}-${d}`, 'active-phy');
                     currentStep++;
                     break;
             }
 
             isAnimating = false;
-            updateUIState();
+            updateUI();
         }
 
         function resetSim() {
             currentStep = 0;
             ctx.clearRect(0,0, canvas.width, canvas.height);
-            document.querySelectorAll('.active-data, .active-phy-data, .highlight-row').forEach(el => {
-                el.classList.remove('active-data', 'active-phy-data', 'highlight-row');
+            document.querySelectorAll('.active-log, .active-phy, .row-highlight').forEach(el => {
+                el.classList.remove('active-log', 'active-phy', 'row-highlight');
             });
             
-            // Reset Displays
             document.getElementById('disp-p').innerText = document.getElementById('sel-p').value;
             document.getElementById('bin-p').innerText = toBin(parseInt(document.getElementById('sel-p').value), 2);
-            
             document.getElementById('disp-d').innerText = document.getElementById('sel-d').value;
             document.getElementById('bin-d').innerText = toBin(parseInt(document.getElementById('sel-d').value), 2);
-
             document.getElementById('disp-f').innerText = '-';
             document.getElementById('bin-f').innerText = '---';
-            
             document.getElementById('disp-d-phy').innerText = '-';
             document.getElementById('bin-d-phy').innerText = '--';
 
@@ -583,27 +718,27 @@
             document.getElementById('sel-d').disabled = false;
             
             setStatus("Ready to Start");
-            updateUIState();
+            updateUI();
         }
 
-        function setStatus(msg) { document.getElementById('status-msg').innerHTML = msg; }
+        function setStatus(msg) { document.getElementById('status-msg').innerText = msg; }
 
-        function highlight(id, className) {
+        function highlight(id, cls) {
             const el = document.getElementById(id);
-            if(el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add(className); }
+            if(el) { el.scrollIntoView({behavior:'smooth', block:'center'}); el.classList.add(cls); }
         }
 
-        function updateUIState() {
+        function updateUI() {
             const btn = document.getElementById('btn-next');
             if(currentStep >= 4) {
-                btn.innerHTML = "Finished";
+                btn.innerHTML = `Finished <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>`;
                 btn.disabled = true;
             } else {
-                btn.innerHTML = "Next Step &#8594;";
+                btn.innerHTML = `Next Step <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l6-6-6-6"/></svg>`;
                 btn.disabled = false;
             }
-            const dots = document.querySelectorAll('.dot');
-            dots.forEach((d, i) => {
+            
+            document.querySelectorAll('.dot').forEach((d, i) => {
                 if(i <= currentStep) d.classList.add('active');
                 else d.classList.remove('active');
             });
