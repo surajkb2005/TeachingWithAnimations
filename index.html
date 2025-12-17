@@ -3,200 +3,365 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Animation Portfolio</title>
+    <title>Debugging Doubts | Animation Portfolio</title>
     <style>
-        /* --- CSS Reset & Variables --- */
+        /* --- 1. CSS Variables & Aesthetic Themes --- */
         :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
+            /* Dark Mode (Default) */
+            --bg-color: #0f111a;
+            --card-bg: #1e212e;
             --text-main: #ffffff;
-            --text-secondary: #aaaaaa;
-            --accent-color: #6c5ce7;
-            --hover-shadow: 0 10px 20px rgba(108, 92, 231, 0.2);
+            --text-secondary: #94a3b8;
+            --accent-color: #7c3aed;
+            --border-color: rgba(255, 255, 255, 0.08);
+            
+            /* INITIAL SHADOW: Visible immediately */
+            --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 
+                           0 10px 10px -5px rgba(0, 0, 0, 0.4);
+            
+            /* HOVER SHADOW: Glow effect */
+            --hover-shadow: 0 20px 40px -10px rgba(124, 58, 237, 0.4), 
+                            0 10px 15px -5px rgba(124, 58, 237, 0.2);
         }
 
+        [data-theme="light"] {
+            /* Light Mode */
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-secondary: #64748b;
+            --accent-color: #6366f1;
+            --border-color: rgba(0, 0, 0, 0.05);
+            
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 
+                           0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            --hover-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.25);
+        }
+
+        /* --- 2. General Reset --- */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             min-height: 100vh;
-            padding: 2rem;
+            padding: 4rem 2rem;
         }
 
-        /* --- Header Styles --- */
+        /* --- 3. Theme Toggle --- */
+        .theme-switch-wrapper {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            z-index: 1000;
+        }
+
+        .theme-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        /* --- 4. Header --- */
         header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 5rem;
+            max-width: 800px;
         }
 
         h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(90deg, #fff, var(--accent-color));
+            font-size: 3.5rem;
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-main) 30%, var(--accent-color));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        p.subtitle {
+        .subtitle {
             color: var(--text-secondary);
-            font-size: 1.1rem;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
         }
 
-        /* --- Grid Layout --- */
+        .youtube-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 28px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .youtube-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(239, 68, 68, 0.4);
+            background: #dc2626;
+        }
+
+        .youtube-btn svg { width: 20px; fill: white; }
+
+        /* --- 5. Grid Layout --- */
         .gallery-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 3rem;
             width: 100%;
             max-width: 1200px;
         }
 
-        /* --- Card Styles --- */
+        /* --- 6. Aesthetic Cards with Initial Shading --- */
         .card {
             background-color: var(--card-bg);
-            border-radius: 12px;
+            border-radius: 24px;
             overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            text-decoration: none; /* Removes underline from link */
-            color: inherit;
-            border: 1px solid #333;
+            border: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
+            
+            /* APPLYING INITIAL SHADOW HERE */
+            box-shadow: var(--card-shadow); 
+            
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .card:hover {
-            transform: translateY(-8px);
+            transform: translateY(-12px);
             box-shadow: var(--hover-shadow);
             border-color: var(--accent-color);
         }
 
-        /* Thumbnail Container */
         .thumbnail-box {
             width: 100%;
-            height: 180px;
-            background-color: #2a2a2a;
+            height: 220px;
             overflow: hidden;
             position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .thumbnail-box img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.5s ease;
+            transition: transform 0.8s ease;
         }
 
         .card:hover .thumbnail-box img {
-            transform: scale(1.05);
+            transform: scale(1.1);
         }
 
-        /* If you don't have images yet, this placeholder text shows up */
-        .placeholder-text {
-            color: #555;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        /* Card Content */
         .card-content {
-            padding: 1.5rem;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
 
         .card-title {
-            font-size: 1.4rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.6rem;
+            margin-bottom: 0.8rem;
             color: var(--text-main);
+            font-weight: 700;
         }
 
         .card-desc {
-            font-size: 0.9rem;
+            font-size: 1rem;
             color: var(--text-secondary);
-            line-height: 1.5;
+            line-height: 1.7;
+            margin-bottom: 2.5rem;
         }
 
-        /* --- Button inside card --- */
+        /* --- 7. Interactive Buttons --- */
+        .card-actions {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
         .view-btn {
-            margin-top: 1rem;
-            display: inline-block;
-            font-size: 0.9rem;
+            text-decoration: none;
+            font-size: 1rem;
             color: var(--accent-color);
+            font-weight: 700;
+            position: relative;
+        }
+
+        .view-btn::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .view-btn:hover::after { width: 100%; }
+
+        .video-link-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            font-size: 0.9rem;
             font-weight: 600;
+            color: #ffffff;
+            background: #ef4444;
+            padding: 10px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+            transition: all 0.3s ease;
         }
 
-        .card:hover .view-btn {
-            text-decoration: underline;
+        .video-link-btn:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(239, 68, 68, 0.4);
         }
 
+        .video-link-btn svg { width: 18px; fill: white; }
     </style>
 </head>
 <body>
 
+    <div class="theme-switch-wrapper">
+        <button class="theme-btn" id="theme-toggle">
+            <span id="theme-icon">🌙</span> 
+            <span id="theme-text">Dark Mode</span>
+        </button>
+    </div>
+
     <header>
         <h1>Debugging Doubts Visualization</h1>
-        <p class="subtitle">A collection of my creative web animations for academics</p>
+        <p class="subtitle">Interactive academic animations for Operating Systems and beyond.</p>
+        <a href="https://youtube.com/@debuggingdoubts" target="_blank" rel="noopener" class="youtube-btn">
+            <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+            Subscribe to Channel
+        </a>
     </header>
 
     <div class="gallery-container">
-
-        <a href="Deadlock_avoid.html" class="card">
+        <div class="card">
             <div class="thumbnail-box">
-                <img src="assets/images/deadlock.png" alt="Preview 2">
+                <img src="assets/images/deadlock.png" alt="Deadlock Simulation">
             </div>
             <div class="card-content">
-                <h2 class="card-title">Deadlock description</h2>
-                <p class="card-desc">visualize how deadlock happens</p>
-                <span class="view-btn">View Project &rarr;</span>
+                <h2 class="card-title">Deadlock Description</h2>
+                <p class="card-desc">An interactive visualization showing how processes enter a state of deadlock and resource contention.</p>
+                <div class="card-actions">
+                    <a href="Deadlock_avoid.html" class="view-btn">Live Demo &rarr;</a>
+                    <a href="https://youtu.be/kgQ8NN1S2z8" target="_blank" rel="noopener" class="video-link-btn">
+                        <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        Tutorial
+                    </a>
+                </div>
             </div>
-        </a>
+        </div>
 
-        <a href="safety_algo.html" class="card">
+        <div class="card">
             <div class="thumbnail-box">
-                <img src="./assets/images/banker_algo.png" alt="Preview 1">
+                <img src="assets/images/banker_algo.png" alt="Banker's Algorithm">
             </div>
             <div class="card-content">
                 <h2 class="card-title">Banker's Algorithm</h2>
-                <p class="card-desc">Visualize how banker algorithm works</p>
-                <span class="view-btn">View Project &rarr;</span>
+                <p class="card-desc">Visualize safety sequences and resource allocation to prevent system deadlock.</p>
+                <div class="card-actions">
+                    <a href="safety_algo.html" class="view-btn">Live Demo &rarr;</a>
+                    <a href="https://youtu.be/kgQ8NN1S2z8" target="_blank" rel="noopener" class="video-link-btn">
+                        <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        Tutorial
+                    </a>
+                </div>
             </div>
-        </a>
+        </div>
 
-        <a href="paging_Initial_concepts.html" class="card">
+        <div class="card">
             <div class="thumbnail-box">
-                <img src="assets/images/paging.png" alt="Preview 4">
+                <img src="assets/images/paging.png" alt="Paging Basics">
             </div>
             <div class="card-content">
                 <h2 class="card-title">Basic Paging Concept</h2>
-                <p class="card-desc">See how paging works</p>
-                <span class="view-btn">View Project &rarr;</span>
+                <p class="card-desc">Understand how logical addresses are mapped to physical memory through page tables.</p>
+                <div class="card-actions">
+                    <a href="paging_Initial_concepts.html" class="view-btn">Live Demo &rarr;</a>
+                    <a href="https://youtu.be/NmdqSa0Uzpw" target="_blank" rel="noopener" class="video-link-btn">
+                        <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        Tutorial
+                    </a>
+                </div>
             </div>
-        </a>
+        </div>
 
-        <a href="paging.html" class="card">
+        <div class="card">
             <div class="thumbnail-box">
-                <img src="assets/images/paging_TLB.png" alt="Preview 3">
+                <img src="assets/images/paging_TLB.png" alt="TLB Paging">
             </div>
             <div class="card-content">
                 <h2 class="card-title">Paging With TLB</h2>
-                <p class="card-desc">See what happens when TLB cache is present for paging</p>
-                <span class="view-btn">View Project &rarr;</span>
+                <p class="card-desc">Advanced memory management visualization incorporating Translation Lookaside Buffer cache.</p>
+                <div class="card-actions">
+                    <a href="paging.html" class="view-btn">Live Demo &rarr;</a>
+                    <a href="https://youtu.be/NmdqSa0Uzpw" target="_blank" rel="noopener" class="video-link-btn">
+                        <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        Tutorial
+                    </a>
+                </div>
             </div>
-        </a>
-
+        </div>
     </div>
 
+    <script>
+        const toggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+        const themeText = document.getElementById('theme-text');
+        
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') enableLightMode();
+
+        toggleBtn.addEventListener('click', () => {
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+            isLight ? disableLightMode() : enableLightMode();
+        });
+
+        function enableLightMode() {
+            document.documentElement.setAttribute('data-theme', 'light');
+            themeIcon.textContent = '☀️';
+            themeText.textContent = 'Light Mode';
+            localStorage.setItem('theme', 'light');
+        }
+
+        function disableLightMode() {
+            document.documentElement.removeAttribute('data-theme');
+            themeIcon.textContent = '🌙';
+            themeText.textContent = 'Dark Mode';
+            localStorage.setItem('theme', 'dark');
+        }
+    </script>
 </body>
 </html>
