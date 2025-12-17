@@ -2,518 +2,467 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OS Paging Simulation</title>
+    <title>OS Paging Hardware Simulation</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap');
+
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --highlight-color: #f1c40f;
-            --error-color: #e74c3c;
-            --dark-bg: #2c3e50;
-            --light-bg: #ecf0f1;
+            --bg-color: #1a1a1a;
+            --box-bg: #2d2d2d;
+            --accent-cpu: #3498db;  /* Blue */
+            --accent-tlb: #e67e22;  /* Orange */
+            --accent-pt: #9b59b6;   /* Purple */
+            --accent-mem: #2ecc71;  /* Green */
+            --text-color: #ecf0f1;
+            --line-color: #555;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-bg);
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Roboto Mono', monospace;
             margin: 0;
             padding: 20px;
-        }
-
-        h1 { color: var(--dark-bg); margin-bottom: 10px; }
-        p { max-width: 800px; text-align: center; margin-bottom: 20px; }
-
-        .controls {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            transition: background 0.3s;
-        }
-
-        button:hover { background-color: #2980b9; }
-        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-
-        .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 20px;
-            width: 100%;
-            max-width: 1200px;
-        }
-
-        /* Components */
-        .box {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 { margin-bottom: 10px; border-bottom: 2px solid var(--accent-cpu); padding-bottom: 5px; }
+        
+        /* --- LAYOUT GRID (Mimics Textbook Diagram) --- */
+        .diagram-container {
             position: relative;
-        }
-
-        .box h3 { margin-top: 0; border-bottom: 2px solid var(--light-bg); width: 100%; text-align: center; padding-bottom: 10px; }
-
-        /* CPU & Address */
-        .address-box {
-            display: flex;
-            border: 2px solid #333;
-            margin-top: 10px;
-            font-family: monospace;
-            font-size: 1.2em;
-        }
-        .addr-part { padding: 5px 10px; text-align: center; }
-        .p-part { background-color: #e8f6f3; border-right: 1px solid #333; }
-        .d-part { background-color: #fef9e7; }
-        .label { font-size: 0.7em; color: #666; display: block; }
-
-        /* Memory Visuals */
-        .memory-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            width: 100%;
-            gap: 2px;
-            border: 1px solid #ddd;
-            background: #eee;
-            max-height: 400px;
-            overflow-y: auto;
+            grid-template-columns: 180px 220px 220px 200px;
+            grid-template-rows: auto auto auto;
+            gap: 40px 20px;
+            margin: 40px 0;
+            padding: 20px;
+            background: #222;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
-        .memory-cell {
-            background: white;
-            padding: 5px;
-            font-family: monospace;
-            font-size: 0.9em;
+        /* --- COMPONENTS --- */
+        .box {
+            background: var(--box-bg);
+            border: 2px solid #444;
+            border-radius: 5px;
+            padding: 10px;
+            position: relative;
+            transition: all 0.3s;
+            z-index: 2;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .box h3 { margin: 0 0 10px 0; font-size: 0.9rem; text-transform: uppercase; color: #888; text-align: center; border-bottom: 1px solid #444; padding-bottom: 5px; }
+
+        /* CPU & Address Box */
+        .cpu-group { grid-column: 1; grid-row: 1 / span 2; align-self: center; }
+        .addr-box {
             display: flex;
-            justify-content: space-between;
-            border-bottom: 1px solid #eee;
+            border: 2px solid #fff;
+            margin-top: 10px;
+            background: #000;
+        }
+        .part { padding: 8px; flex: 1; text-align: center; font-weight: bold; position: relative; }
+        .part-p { border-right: 1px solid #fff; color: var(--accent-cpu); }
+        .part-d { color: var(--accent-mem); }
+        .part label { position: absolute; top: -20px; left: 0; width: 100%; font-size: 0.7rem; color: #aaa; }
+
+        /* TLB */
+        .tlb-group { grid-column: 2; grid-row: 1; }
+        .table-view {
+            max-height: 120px; overflow-y: auto; font-size: 0.8rem;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 2px;
+        }
+        .table-head { font-weight: bold; color: #aaa; border-bottom: 1px solid #555; margin-bottom: 2px; }
+        .table-row { background: #333; padding: 2px 5px; display: contents; }
+        .table-row span { padding: 2px; text-align: center; }
+        
+        /* Page Table */
+        .pt-group { grid-column: 2; grid-row: 2; margin-top: 20px; }
+        
+        /* Physical Address */
+        .phy-addr-group { grid-column: 3; grid-row: 1 / span 2; align-self: center; display: flex; flex-direction: column; align-items: center; }
+        .phy-box {
+            display: flex;
+            border: 2px solid var(--accent-mem);
+            background: #000;
+            width: 100%;
         }
         
-        .memory-cell.header { background: #ddd; font-weight: bold; }
-        
-        .active-row { background-color: var(--highlight-color) !important; transition: background 0.5s; }
-        .target-row { background-color: var(--secondary-color) !important; color: white; transition: background 0.5s; }
-        .miss-row { background-color: var(--error-color) !important; color: white; transition: background 0.5s; }
+        /* Physical Memory */
+        .mem-group { grid-column: 4; grid-row: 1 / span 2; align-self: center; height: 300px; }
+        .mem-grid { display: flex; flex-direction: column; height: 100%; overflow-y: auto; gap: 1px; }
+        .mem-cell { background: #333; padding: 4px; font-size: 0.75rem; display: flex; justify-content: space-between; }
 
-        /* Tables (TLB & Page Table) */
-        table { width: 100%; border-collapse: collapse; font-family: monospace; }
-        th, td { border: 1px solid #ddd; padding: 4px; text-align: center; }
-        th { background-color: #f8f9fa; }
-
-        /* Animation Lines (Canvas Overlay) */
-        #canvas-overlay {
+        /* --- ANIMATION CANVAS --- */
+        #anim-canvas {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             pointer-events: none;
             z-index: 10;
         }
 
-        /* Status Log */
-        .status-panel {
-            grid-column: 1 / -1;
-            background: #333;
-            color: #0f0;
-            font-family: monospace;
-            padding: 15px;
-            border-radius: 5px;
-            height: 100px;
-            overflow-y: auto;
-            white-space: pre-wrap;
+        /* --- CONTROLS --- */
+        .controls {
+            display: flex; gap: 15px; background: var(--box-bg); padding: 15px; border-radius: 8px; border-top: 3px solid var(--accent-cpu);
+            align-items: center;
         }
+        button {
+            background: transparent; border: 1px solid var(--accent-cpu); color: var(--accent-cpu);
+            padding: 8px 16px; font-family: inherit; cursor: pointer; transition: 0.2s;
+            font-weight: bold;
+        }
+        button:hover { background: var(--accent-cpu); color: #fff; }
+        button:disabled { border-color: #555; color: #555; cursor: not-allowed; }
+        
+        .status-bar { margin-top: 15px; color: #aaa; font-size: 0.9rem; height: 20px; }
+        .hit-text { color: var(--accent-mem); font-weight: bold; }
+        .miss-text { color: #e74c3c; font-weight: bold; }
 
-        /* Legend */
-        .legend {
-            display: flex;
-            gap: 15px;
-            font-size: 0.8em;
-            margin-top: 5px;
-        }
-        .legend-item { display: flex; align-items: center; gap: 5px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        /* Highlights */
+        .active-box { box-shadow: 0 0 15px var(--accent-cpu); border-color: var(--accent-cpu); }
+        .found-row { background-color: var(--accent-mem) !important; color: #000; }
+        .miss-row { background-color: #e74c3c !important; }
+
     </style>
 </head>
 <body>
 
-    <h1>Interactive Paging Simulation</h1>
-    <p>This simulation demonstrates the hardware address translation using a <b>Page Table</b> and a <b>TLB (Translation Look-aside Buffer)</b>.</p>
+    <h1>Paging Hardware Simulation</h1>
+    <div style="font-size: 0.8rem; color: #888;">Based on Silberschatz Operating System Concepts Diagram</div>
 
-    <div class="controls">
-        <label>Simulation Speed: 
-            <select id="speedSelect">
-                <option value="1500">Slow</option>
-                <option value="800" selected>Normal</option>
-                <option value="300">Fast</option>
-            </select>
-        </label>
-        <button id="btnGenerate" onclick="startSimulation()">Generate CPU Request</button>
-        <button id="btnReset" onclick="resetSimulation()" style="background-color: #7f8c8d;">Reset</button>
-    </div>
+    <div class="diagram-container">
+        <canvas id="anim-canvas"></canvas>
 
-    <div class="legend">
-        <div class="legend-item"><div class="dot" style="background:var(--highlight-color)"></div> Scanning/Lookup</div>
-        <div class="legend-item"><div class="dot" style="background:var(--secondary-color)"></div> Hit/Found</div>
-        <div class="legend-item"><div class="dot" style="background:var(--error-color)"></div> Miss</div>
-    </div>
-
-    <div class="container" style="position: relative;">
-        <canvas id="canvas-overlay"></canvas>
-
-        <div class="box" id="cpuBox">
-            <h3>CPU (Logical Address)</h3>
-            <div style="margin: 10px 0;">Generating Logic Address...</div>
-            <div class="address-box" id="cpuAddressDisplay" style="opacity: 0.3;">
-                <div class="addr-part p-part">
-                    <span class="label">Page (p)</span>
+        <div class="box cpu-group" id="box-cpu">
+            <h3>CPU</h3>
+            <div style="font-size: 0.8rem; text-align: center; margin-bottom: 5px;">Logical Address</div>
+            <div class="addr-box">
+                <div class="part part-p">
+                    <label>p</label>
                     <span id="val-p">0</span>
                 </div>
-                <div class="addr-part d-part">
-                    <span class="label">Offset (d)</span>
+                <div class="part part-d">
+                    <label>d</label>
                     <span id="val-d">0</span>
                 </div>
             </div>
-            <p style="font-size: 0.8em; color: #555; margin-top: 5px;">Example: 16-entry Logical Memory</p>
         </div>
 
-        <div class="box" id="tlbBox">
+        <div class="box tlb-group" id="box-tlb">
             <h3>TLB (Cache)</h3>
-            <table>
-                <thead>
-                    <tr><th>Page (p)</th><th>Frame (f)</th></tr>
-                </thead>
-                <tbody id="tlbTableBody">
-                    </tbody>
-            </table>
-            <div id="tlbStatus" style="margin-top:5px; font-weight: bold; height: 20px;"></div>
+            <div class="table-view" id="tlb-view">
+                <div class="table-head">p</div><div class="table-head">f</div>
+                </div>
         </div>
 
-        <div class="box" id="ptBox">
+        <div class="box pt-group" id="box-pt">
             <h3>Page Table</h3>
-            <div class="memory-grid" id="pageTableGrid">
-                <div class="memory-cell header"><span>Pg#</span><span>Frame#</span></div>
+            <div class="table-view" id="pt-view" style="height: 150px;">
+                <div class="table-head">Idx</div><div class="table-head">f</div>
                 </div>
         </div>
 
-        <div class="box" id="ramBox">
-            <h3>Physical Memory</h3>
-            <div class="memory-grid" id="phyMemGrid">
-                <div class="memory-cell header"><span>Addr</span><span>Content</span></div>
-                </div>
-            <div class="address-box" id="phyAddressDisplay" style="margin-top: 10px; opacity: 0; border-color: var(--secondary-color);">
-                <div class="addr-part p-part" style="background:#e8f8f5;">
-                    <span class="label">Frame (f)</span>
+        <div class="box phy-addr-group" id="box-phy">
+            <h3>Physical Address</h3>
+            <div class="phy-box">
+                <div class="part part-p" style="color: var(--accent-mem); border-color: var(--accent-mem);">
+                    <label>f</label>
                     <span id="val-f">-</span>
                 </div>
-                <div class="addr-part d-part">
-                    <span class="label">Offset (d)</span>
+                <div class="part part-d">
+                    <label>d</label>
                     <span id="val-d-phy">-</span>
                 </div>
             </div>
         </div>
 
-        <div class="status-panel" id="logPanel">
-            > System Ready. Click "Generate CPU Request" to start.
+        <div class="box mem-group" id="box-mem">
+            <h3>Physical Memory</h3>
+            <div class="mem-grid" id="mem-view">
+                </div>
         </div>
     </div>
 
+    <div class="controls">
+        <div>
+            <label style="font-size: 0.8rem; color: #aaa;">Page (p):</label>
+            <input type="number" id="in-p" min="0" max="7" value="2" style="width: 40px; background:#333; border:1px solid #555; color:#fff; text-align:center;">
+        </div>
+        <div>
+            <label style="font-size: 0.8rem; color: #aaa;">Offset (d):</label>
+            <input type="number" id="in-d" min="0" max="99" value="15" style="width: 40px; background:#333; border:1px solid #555; color:#fff; text-align:center;">
+        </div>
+        <button onclick="runSimulation()">Generate Address</button>
+        <button onclick="resetSim()" style="border-color: #e74c3c; color: #e74c3c;">Reset</button>
+    </div>
+
+    <div class="status-bar" id="status-text">System Ready.</div>
+
     <script>
-        // --- Configuration ---
+        /* --- CONFIG --- */
         const PAGE_COUNT = 8;
         const FRAME_COUNT = 16;
-        const TLB_SIZE = 3;
-        const PAGE_SIZE = 4; // Visual representation size
-
-        // --- State ---
+        const TLB_SIZE = 4;
+        
         let pageTable = [];
         let tlb = [];
-        let isAnimating = false;
+        let isRunning = false;
 
-        // --- DOM Elements ---
-        const logPanel = document.getElementById('logPanel');
-        const canvas = document.getElementById('canvas-overlay');
+        const canvas = document.getElementById('anim-canvas');
         const ctx = canvas.getContext('2d');
 
-        // --- Initialization ---
         function init() {
-            // Initialize Page Table (Random Frame assignments, some invalid represented by -1)
+            // Setup Page Table
             pageTable = [];
-            const usedFrames = new Set();
-            for (let i = 0; i < PAGE_COUNT; i++) {
-                let frame = -1;
-                // 80% chance of being valid
-                if (Math.random() > 0.2) {
-                    do {
-                        frame = Math.floor(Math.random() * FRAME_COUNT);
-                    } while (usedFrames.has(frame));
-                    usedFrames.add(frame);
+            let usedFrames = new Set();
+            for(let i=0; i<PAGE_COUNT; i++){
+                let f = -1;
+                if(Math.random() > 0.2) { // 80% valid
+                    do { f = Math.floor(Math.random() * FRAME_COUNT); } while(usedFrames.has(f));
+                    usedFrames.add(f);
                 }
-                pageTable.push(frame);
+                pageTable.push(f);
             }
-
-            // Initialize TLB (Empty initially)
             tlb = [];
-
-            renderPageTable();
-            renderTLB();
-            renderPhysicalMemory();
+            renderDOM();
             resizeCanvas();
         }
 
-        // --- Rendering Functions ---
-        function renderPageTable() {
-            const container = document.getElementById('pageTableGrid');
-            container.innerHTML = '<div class="memory-cell header"><span>Pg (p)</span><span>Frame (f)</span></div>';
-            pageTable.forEach((frame, idx) => {
-                const row = document.createElement('div');
-                row.className = 'memory-cell';
-                row.id = `pt-row-${idx}`;
-                row.innerHTML = `<span>${idx}</span><span>${frame === -1 ? 'Invalid' : frame}</span>`;
-                container.appendChild(row);
+        function renderDOM() {
+            // TLB
+            const tlbEl = document.getElementById('tlb-view');
+            tlbEl.innerHTML = '<div class="table-head">p</div><div class="table-head">f</div>';
+            for(let i=0; i<TLB_SIZE; i++) {
+                let entry = tlb[i];
+                tlbEl.innerHTML += `
+                    <div class="table-row" id="tlb-row-${i}">
+                        <span>${entry ? entry.p : '-'}</span>
+                        <span>${entry ? entry.f : '-'}</span>
+                    </div>`;
+            }
+
+            // Page Table
+            const ptEl = document.getElementById('pt-view');
+            ptEl.innerHTML = '<div class="table-head">Idx</div><div class="table-head">f</div>';
+            pageTable.forEach((f, i) => {
+                ptEl.innerHTML += `
+                    <div class="table-row" id="pt-row-${i}">
+                        <span>${i}</span>
+                        <span>${f === -1 ? 'i' : f}</span>
+                    </div>`;
             });
-        }
 
-        function renderTLB() {
-            const tbody = document.getElementById('tlbTableBody');
-            tbody.innerHTML = '';
-            // Fill empty slots if TLB is not full
-            const displayRows = [...tlb];
-            while (displayRows.length < TLB_SIZE) displayRows.push(null);
-
-            displayRows.forEach((entry, idx) => {
-                const tr = document.createElement('tr');
-                tr.id = `tlb-row-${idx}`;
-                if (entry) {
-                    tr.innerHTML = `<td>${entry.p}</td><td>${entry.f}</td>`;
-                } else {
-                    tr.innerHTML = `<td>-</td><td>-</td>`;
-                }
-                tbody.appendChild(tr);
-            });
-        }
-
-        function renderPhysicalMemory() {
-            const container = document.getElementById('phyMemGrid');
-            container.innerHTML = '<div class="memory-cell header"><span>Frame#</span><span>Data</span></div>';
+            // Memory
+            const memEl = document.getElementById('mem-view');
+            memEl.innerHTML = '';
             for(let i=0; i<FRAME_COUNT; i++) {
-                const row = document.createElement('div');
-                row.className = 'memory-cell';
-                row.id = `mem-row-${i}`;
-                row.innerHTML = `<span>Frame ${i}</span><span>[Data ${i}]</span>`;
-                container.appendChild(row);
+                memEl.innerHTML += `<div class="mem-cell" id="mem-row-${i}"><span>Fr ${i}</span><span>[Data]</span></div>`;
             }
         }
 
-        function log(msg) {
-            logPanel.innerHTML += `\n> ${msg}`;
-            logPanel.scrollTop = logPanel.scrollHeight;
+        /* --- VISUALIZATION HELPERS --- */
+        function getRect(id) {
+            const el = document.getElementById(id);
+            const container = document.querySelector('.diagram-container');
+            const r = el.getBoundingClientRect();
+            const c = container.getBoundingClientRect();
+            return {
+                x: r.left - c.left + r.width/2,
+                y: r.top - c.top + r.height/2,
+                w: r.width, h: r.height,
+                left: r.left - c.left, top: r.top - c.top,
+                right: r.right - c.left, bottom: r.bottom - c.top
+            };
         }
 
-        function clearHighlights() {
-            document.querySelectorAll('.active-row, .target-row, .miss-row').forEach(el => {
-                el.classList.remove('active-row', 'target-row', 'miss-row');
-            });
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('tlbStatus').innerText = '';
-            document.getElementById('phyAddressDisplay').style.opacity = '0';
-        }
-
-        // --- Animation Helper ---
-        const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-        
-        function getSpeed() {
-            return parseInt(document.getElementById('speedSelect').value);
-        }
-
-        // --- Core Simulation Logic ---
-        async function startSimulation() {
-            if (isAnimating) return;
-            isAnimating = true;
-            document.getElementById('btnGenerate').disabled = true;
-            clearHighlights();
-            
-            // 1. Generate Address
-            const logicalPage = Math.floor(Math.random() * PAGE_COUNT);
-            const offset = Math.floor(Math.random() * 99); // Arbitrary offset
-            
-            document.getElementById('val-p').innerText = logicalPage;
-            document.getElementById('val-d').innerText = offset;
-            document.getElementById('cpuAddressDisplay').style.opacity = '1';
-            
-            log(`CPU generated Logical Address: Page ${logicalPage}, Offset ${offset}`);
-            await sleep(getSpeed());
-
-            // 2. Check TLB
-            log("Checking TLB (Translation Look-aside Buffer)...");
-            let tlbHitIndex = -1;
-            let frameNumber = -1;
-
-            // Animate TLB scan
-            const tlbRows = document.getElementById('tlbTableBody').children;
-            for (let i = 0; i < tlb.length; i++) {
-                if (tlbRows[i]) tlbRows[i].classList.add('active-row');
-                await sleep(getSpeed() / 2);
+        async function drawPath(p1, p2, color, label="") {
+            return new Promise(resolve => {
+                const start = {x: p1.x, y: p1.y};
+                const end = {x: p2.x, y: p2.y};
+                let progress = 0;
                 
-                if (tlb[i].p === logicalPage) {
-                    tlbHitIndex = i;
-                    frameNumber = tlb[i].f;
-                    if (tlbRows[i]) {
-                        tlbRows[i].classList.remove('active-row');
-                        tlbRows[i].classList.add('target-row');
-                    }
-                    break;
-                }
-                if (tlbRows[i]) tlbRows[i].classList.remove('active-row');
-            }
+                function step() {
+                    progress += 0.05;
+                    if(progress > 1) progress = 1;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(start.x, start.y);
+                    ctx.lineTo(start.x + (end.x - start.x)*progress, start.y + (end.y - start.y)*progress);
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
 
-            if (tlbHitIndex !== -1) {
-                // TLB HIT
-                document.getElementById('tlbStatus').innerHTML = '<span style="color:var(--secondary-color)">TLB HIT!</span>';
-                log(`TLB Hit! Page ${logicalPage} maps to Frame ${frameNumber}.`);
-                drawArrow('tlbBox', 'ramBox');
+                    if(label && progress > 0.5) {
+                        ctx.fillStyle = "#fff";
+                        ctx.font = "12px monospace";
+                        ctx.fillText(label, (start.x+end.x)/2, (start.y+end.y)/2 - 5);
+                    }
+
+                    if(progress < 1) requestAnimationFrame(step);
+                    else resolve();
+                }
+                step();
+            });
+        }
+
+        function clearCanvas() { ctx.clearRect(0,0, canvas.width, canvas.height); }
+        function setStatus(msg, type="") {
+            const el = document.getElementById('status-text');
+            el.innerHTML = msg;
+            el.className = "status-bar " + type;
+        }
+
+        /* --- SIMULATION LOGIC --- */
+        async function runSimulation() {
+            if(isRunning) return;
+            isRunning = true;
+            clearCanvas();
+            document.querySelectorAll('.found-row, .miss-row, .active-box').forEach(e => e.classList.remove('found-row', 'miss-row', 'active-box'));
+            
+            const p = parseInt(document.getElementById('in-p').value);
+            const d = parseInt(document.getElementById('in-d').value);
+            
+            // 1. Initial State
+            document.getElementById('val-p').innerText = p;
+            document.getElementById('val-d').innerText = d;
+            document.getElementById('val-f').innerText = '?';
+            document.getElementById('val-d-phy').innerText = '?';
+            
+            const cpuBox = getRect('box-cpu');
+            const tlbBox = getRect('box-tlb');
+            const ptBox = getRect('box-pt');
+            const phyBox = getRect('box-phy');
+            const memBox = getRect('box-mem');
+
+            // Draw: d bypasses translation
+            setStatus("Extracting Offset (d)...");
+            await drawPath(
+                {x: cpuBox.right - 40, y: cpuBox.y + 10}, 
+                {x: phyBox.left + 40, y: phyBox.y + 10}, 
+                "#2ecc71", "d"
+            );
+            document.getElementById('val-d-phy').innerText = d;
+
+            // Draw: p goes to TLB
+            setStatus("Checking TLB for Page " + p + "...");
+            await drawPath(
+                {x: cpuBox.right - 40, y: cpuBox.y - 10}, 
+                {x: tlbBox.left, y: tlbBox.y}, 
+                "#3498db", "p"
+            );
+            document.getElementById('box-tlb').classList.add('active-box');
+            
+            await new Promise(r => setTimeout(r, 500));
+
+            // Check TLB
+            let frame = -1;
+            let tlbHit = false;
+            
+            const tlbIdx = tlb.findIndex(e => e.p === p);
+            
+            if(tlbIdx !== -1) {
+                // HIT
+                tlbHit = true;
+                frame = tlb[tlbIdx].f;
+                setStatus("TLB HIT!", "hit-text");
+                document.getElementById(`tlb-row-${tlbIdx}`).classList.add('found-row');
+                
+                await drawPath(
+                    {x: tlbBox.right, y: tlbBox.y}, 
+                    {x: phyBox.left + 20, y: phyBox.y - 10}, 
+                    "#2ecc71", "f"
+                );
+
             } else {
-                // TLB MISS
-                document.getElementById('tlbStatus').innerHTML = '<span style="color:var(--error-color)">TLB MISS</span>';
-                log(`TLB Miss. Consult Page Table in memory.`);
-                drawArrow('tlbBox', 'ptBox');
-                await sleep(getSpeed());
-
-                // 3. Access Page Table
-                log(`Accessing Page Table for Page ${logicalPage}...`);
-                const ptRow = document.getElementById(`pt-row-${logicalPage}`);
-                if (ptRow) {
-                    ptRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    ptRow.classList.add('active-row');
+                // MISS
+                setStatus("TLB MISS. Checking Page Table...", "miss-text");
+                document.getElementById('box-tlb').classList.remove('active-box');
+                
+                // Path TLB -> PT
+                await drawPath(
+                    {x: tlbBox.x, y: tlbBox.bottom}, 
+                    {x: ptBox.x, y: ptBox.top}, 
+                    "#e74c3c"
+                );
+                document.getElementById('box-pt').classList.add('active-box');
+                
+                // Scroll to row
+                const row = document.getElementById(`pt-row-${p}`);
+                if(row) {
+                    row.scrollIntoView({behavior:'smooth', block:'center'});
+                    row.classList.add('found-row');
                 }
-                await sleep(getSpeed());
-
-                frameNumber = pageTable[logicalPage];
-
-                if (frameNumber === -1) {
-                    // Page Fault / Invalid
-                    if (ptRow) {
-                        ptRow.classList.remove('active-row');
-                        ptRow.classList.add('miss-row');
-                    }
-                    log(`ERROR: Invalid Page Reference (Trap to OS).`);
-                    isAnimating = false;
-                    document.getElementById('btnGenerate').disabled = false;
+                
+                await new Promise(r => setTimeout(r, 600));
+                
+                frame = pageTable[p];
+                
+                if(frame === -1) {
+                    setStatus("TRAP: Invalid Page Reference!", "miss-text");
+                    isRunning = false;
                     return;
                 }
 
-                if (ptRow) {
-                    ptRow.classList.remove('active-row');
-                    ptRow.classList.add('target-row');
-                }
-                log(`Page Table: Page ${logicalPage} is in Frame ${frameNumber}.`);
-
                 // Update TLB
-                log(`Updating TLB with new mapping (Page ${logicalPage} -> Frame ${frameNumber}).`);
-                updateTLB(logicalPage, frameNumber);
-                drawArrow('ptBox', 'ramBox');
+                if(tlb.length >= TLB_SIZE) tlb.shift();
+                tlb.push({p: p, f: frame});
+                renderDOM(); // Re-render to show new TLB
+                document.getElementById(`tlb-row-${tlb.length-1}`).classList.add('found-row');
+
+                // Path PT -> Phy
+                await drawPath(
+                    {x: ptBox.right, y: ptBox.y}, 
+                    {x: phyBox.left + 20, y: phyBox.y - 10}, 
+                    "#9b59b6", "f"
+                );
             }
 
-            await sleep(getSpeed());
+            document.getElementById('val-f').innerText = frame;
+            setStatus(`Physical Address Generated: Frame ${frame}, Offset ${d}`, "hit-text");
+            document.getElementById('box-phy').classList.add('active-box');
 
-            // 4. Access Physical Memory
-            log(`Constructing Physical Address: Frame ${frameNumber}, Offset ${offset}.`);
+            await new Promise(r => setTimeout(r, 500));
+
+            // Access Memory
+            await drawPath(
+                {x: phyBox.right, y: phyBox.y},
+                {x: memBox.left, y: memBox.y},
+                "#fff"
+            );
             
-            document.getElementById('val-f').innerText = frameNumber;
-            document.getElementById('val-d-phy').innerText = offset;
-            document.getElementById('phyAddressDisplay').style.opacity = '1';
-
-            const memRow = document.getElementById(`mem-row-${frameNumber}`);
-            if (memRow) {
-                memRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                memRow.classList.add('target-row');
+            const memRow = document.getElementById(`mem-row-${frame}`);
+            if(memRow) {
+                memRow.scrollIntoView({behavior:'smooth', block:'center'});
+                memRow.classList.add('found-row');
             }
-            log(`DATA ACCESSED successfully at Physical Address.`);
 
-            isAnimating = false;
-            document.getElementById('btnGenerate').disabled = false;
+            isRunning = false;
         }
 
-        function updateTLB(p, f) {
-            // FIFO Replacement if full
-            if (tlb.length >= TLB_SIZE) {
-                tlb.shift(); // Remove oldest
-            }
-            tlb.push({ p, f });
-            renderTLB();
-            // Highlight the new entry
-            const rows = document.getElementById('tlbTableBody').children;
-            const newRow = rows[rows.length - 1];
-            if (newRow) newRow.classList.add('target-row');
-        }
-
-        function resetSimulation() {
-            logPanel.innerHTML = '> System Reset.';
+        function resetSim() {
             init();
-            clearHighlights();
-            document.getElementById('cpuAddressDisplay').style.opacity = '0.3';
+            clearCanvas();
+            document.getElementById('val-p').innerText = 0;
+            document.getElementById('val-d').innerText = 0;
+            document.getElementById('val-f').innerText = '-';
+            document.getElementById('val-d-phy').innerText = '-';
+            setStatus("System Reset.");
         }
 
-        // --- Canvas Drawing (Simple Arrows) ---
         function resizeCanvas() {
-            canvas.width = document.querySelector('.container').offsetWidth;
-            canvas.height = document.querySelector('.container').offsetHeight;
+            const c = document.querySelector('.diagram-container');
+            canvas.width = c.offsetWidth;
+            canvas.height = c.offsetHeight;
         }
-        window.addEventListener('resize', resizeCanvas);
+        window.onresize = resizeCanvas;
 
-        function drawArrow(fromId, toId) {
-            const fromEl = document.getElementById(fromId);
-            const toEl = document.getElementById(toId);
-            const container = document.querySelector('.container');
-            
-            const fromRect = fromEl.getBoundingClientRect();
-            const toRect = toEl.getBoundingClientRect();
-            const contRect = container.getBoundingClientRect();
-
-            const startX = (fromRect.left + fromRect.width / 2) - contRect.left;
-            const startY = (fromRect.top + fromRect.height / 2) - contRect.top;
-            const endX = (toRect.left + toRect.width / 2) - contRect.left;
-            const endY = (toRect.top + toRect.height / 2) - contRect.top;
-
-            ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(endX, endY);
-            ctx.strokeStyle = '#e74c3c';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // Arrowhead
-            const angle = Math.atan2(endY - startY, endX - startX);
-            ctx.beginPath();
-            ctx.moveTo(endX, endY);
-            ctx.lineTo(endX - 10 * Math.cos(angle - Math.PI / 6), endY - 10 * Math.sin(angle - Math.PI / 6));
-            ctx.lineTo(endX - 10 * Math.cos(angle + Math.PI / 6), endY - 10 * Math.sin(angle + Math.PI / 6));
-            ctx.fillStyle = '#e74c3c';
-            ctx.fill();
-        }
-
-        // Start
         init();
 
     </script>

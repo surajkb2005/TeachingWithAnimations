@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Animation Portfolio</title>
+    <style>
+        /* --- CSS Reset & Variables --- */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --text-secondary: #aaaaaa;
+            --accent-color: #6c5ce7;
+            --hover-shadow: 0 10px 20px rgba(108, 92, 231, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        /* --- Header Styles --- */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #fff, var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* --- Grid Layout --- */
+        .gallery-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        /* --- Card Styles --- */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            text-decoration: none; /* Removes underline from link */
+            color: inherit;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--hover-shadow);
+            border-color: var(--accent-color);
+        }
+
+        /* Thumbnail Container */
+        .thumbnail-box {
+            width: 100%;
+            height: 180px;
+            background-color: #2a2a2a;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .thumbnail-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .card:hover .thumbnail-box img {
+            transform: scale(1.05);
+        }
+
+        /* If you don't have images yet, this placeholder text shows up */
+        .placeholder-text {
+            color: #555;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Card Content */
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* --- Button inside card --- */
+        .view-btn {
+            margin-top: 1rem;
+            display: inline-block;
+            font-size: 0.9rem;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .card:hover .view-btn {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Debugging Doubts Visualization</h1>
+        <p class="subtitle">A collection of my creative web animations for academics</p>
+    </header>
+
+    <div class="gallery-container">
+
+        <a href="Deadlock_avoid.html" class="card">
+            <div class="thumbnail-box">
+                <img src="assets/images/deadlock.png" alt="Preview 2">
+            </div>
+            <div class="card-content">
+                <h2 class="card-title">Deadlock description</h2>
+                <p class="card-desc">visualize how deadlock happens</p>
+                <span class="view-btn">View Project &rarr;</span>
+            </div>
+        </a>
+
+        <a href="safety_algo.html" class="card">
+            <div class="thumbnail-box">
+                <img src="./assets/images/banker_algo.png" alt="Preview 1">
+            </div>
+            <div class="card-content">
+                <h2 class="card-title">Banker's Algorithm</h2>
+                <p class="card-desc">Visualize how banker algorithm works</p>
+                <span class="view-btn">View Project &rarr;</span>
+            </div>
+        </a>
+
+        <a href="paging_Initial_concepts.html" class="card">
+            <div class="thumbnail-box">
+                <img src="assets/images/paging.png" alt="Preview 4">
+            </div>
+            <div class="card-content">
+                <h2 class="card-title">Basic Paging Concept</h2>
+                <p class="card-desc">See how paging works</p>
+                <span class="view-btn">View Project &rarr;</span>
+            </div>
+        </a>
+
+        <a href="paging.html" class="card">
+            <div class="thumbnail-box">
+                <img src="assets/images/paging_TLB.png" alt="Preview 3">
+            </div>
+            <div class="card-content">
+                <h2 class="card-title">Paging With TLB</h2>
+                <p class="card-desc">See what happens when TLB cache is present for paging</p>
+                <span class="view-btn">View Project &rarr;</span>
+            </div>
+        </a>
+
+    </div>
+
+</body>
+</html>
