@@ -246,14 +246,35 @@
         }
 
         .video-link-btn svg { width: 18px; fill: white; }
+        
+        .main-footer {
+            width: 100%;
+            padding: 40px 20px;
+            margin-top: 5rem;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+        }
+
+        .main-footer p {
+            color: var(--text-main);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .footer-subtext {
+            color: var(--text-secondary) !important;
+            font-size: 0.85rem !important;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
     <div class="theme-switch-wrapper">
         <button class="theme-btn" id="theme-toggle">
-            <span id="theme-icon">🌙</span> 
-            <span id="theme-text">Dark Mode</span>
+            <span id="theme-icon">☀️</span> 
+            <span id="theme-text">Light Mode</span>
         </button>
     </div>
 
@@ -269,16 +290,16 @@
     <div class="gallery-container">
         <div class="card">
             <div class="thumbnail-box">
-                <img src="assets/images/deadlock.png" alt="Deadlock Simulation">
+                <img src="assets/images/deadlock.png" alt="Deadlock Simulation" loading="lazy">
             </div>
             <div class="card-content">
-                <h2 class="card-title">Deadlock Description</h2>
+                <h2 class="card-title">Deadlock Handling by Processes</h2>
                 <p class="card-desc">An interactive visualization showing how processes enter a state of deadlock and resource contention.</p>
                 <div class="card-actions">
                     <a href="Deadlock_avoid.html" class="view-btn">Live Demo &rarr;</a>
                     <a href="https://youtu.be/kgQ8NN1S2z8" target="_blank" rel="noopener" class="video-link-btn">
                         <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                        Tutorial
+                        Explanation
                     </a>
                 </div>
             </div>
@@ -286,7 +307,7 @@
 
         <div class="card">
             <div class="thumbnail-box">
-                <img src="assets/images/banker_algo.png" alt="Banker's Algorithm">
+                <img src="assets/images/banker_algo.png" alt="Banker's Algorithm" loading="lazy">
             </div>
             <div class="card-content">
                 <h2 class="card-title">Banker's Algorithm</h2>
@@ -295,7 +316,7 @@
                     <a href="safety_algo.html" class="view-btn">Live Demo &rarr;</a>
                     <a href="https://youtu.be/kgQ8NN1S2z8" target="_blank" rel="noopener" class="video-link-btn">
                         <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                        Tutorial
+                        Explanation
                     </a>
                 </div>
             </div>
@@ -303,7 +324,7 @@
 
         <div class="card">
             <div class="thumbnail-box">
-                <img src="assets/images/paging.png" alt="Paging Basics">
+                <img src="assets/images/paging.png" alt="Paging Basics" loading="lazy">
             </div>
             <div class="card-content">
                 <h2 class="card-title">Basic Paging Concept</h2>
@@ -312,7 +333,7 @@
                     <a href="paging_Initial_concepts.html" class="view-btn">Live Demo &rarr;</a>
                     <a href="https://youtu.be/NmdqSa0Uzpw" target="_blank" rel="noopener" class="video-link-btn">
                         <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                        Tutorial
+                        Explanation
                     </a>
                 </div>
             </div>
@@ -320,7 +341,7 @@
 
         <div class="card">
             <div class="thumbnail-box">
-                <img src="assets/images/paging_TLB.png" alt="TLB Paging">
+                <img src="assets/images/paging_TLB.png" alt="TLB Paging" loading="lazy">
             </div>
             <div class="card-content">
                 <h2 class="card-title">Paging With TLB</h2>
@@ -329,17 +350,42 @@
                     <a href="paging.html" class="view-btn">Live Demo &rarr;</a>
                     <a href="https://youtu.be/NmdqSa0Uzpw" target="_blank" rel="noopener" class="video-link-btn">
                         <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                        Tutorial
+                        Explanation
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="thumbnail-box">
+                <img src="assets/images/coming_soon.jpeg" alt="TLB Paging" loading="lazy">
+            </div>
+            <div class="card-content">
+                <h2 class="card-title">Comming soon.....</h2>
+                <p class="card-desc">have a good day</p>
+                <div class="card-actions">
+                    <a href="" class="view-btn">Live Demo &rarr;</a>
+                    <a href="" target="_blank" rel="noopener" class="video-link-btn">
+                        <svg viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                        Explanation
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
+    <footer class="main-footer">
+        <p>&copy; <span id="year"></span> Debugging Doubts. All rights reserved.</p>
+        <p class="footer-subtext">Visualizing complex concepts, one animation at a time.</p>
+    </footer>
+
     <script>
         const toggleBtn = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
         const themeText = document.getElementById('theme-text');
+
+        // Automatically update the copyright year
+        document.getElementById("year").textContent = new Date().getFullYear();
         
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') enableLightMode();
@@ -351,15 +397,15 @@
 
         function enableLightMode() {
             document.documentElement.setAttribute('data-theme', 'light');
-            themeIcon.textContent = '☀️';
-            themeText.textContent = 'Light Mode';
+            themeIcon.textContent = '🌙';
+            themeText.textContent = 'Dark Mode';
             localStorage.setItem('theme', 'light');
         }
 
         function disableLightMode() {
             document.documentElement.removeAttribute('data-theme');
-            themeIcon.textContent = '🌙';
-            themeText.textContent = 'Dark Mode';
+            themeIcon.textContent = '☀️';
+            themeText.textContent = 'Light Mode';
             localStorage.setItem('theme', 'dark');
         }
     </script>
