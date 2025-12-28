@@ -206,9 +206,39 @@
             text-align: center; margin-top: 30px; color: #888; background: #222; padding: 15px; border-radius: 8px;
         }
 
+        .back-home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 16px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #fff;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+
+        .back-home-btn:hover {
+            transform: translateX(-3px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+        }
+
+        .back-home-btn:active {
+            transform: scale(0.95);
+        }
+
     </style>
 </head>
 <body>
+
+    <button class="back-home-btn" onclick="goHome()">
+        ⬅ Back to Home
+    </button>
 
     <div class="dashboard-container">
         <div class="dashboard">
@@ -251,6 +281,11 @@
 
         let highestMax = 12; 
         let currentAvailable = 0; 
+
+        function goHome() {
+            window.location.href = "../../index.html"; // change if needed
+            // OR use: window.history.back();
+        }
 
         // --- 2. INIT LOGIC ---
         function init() {
